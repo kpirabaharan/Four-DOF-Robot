@@ -25,10 +25,11 @@ double theta2 = 0;
 
 long initial_homing = 1;
 int move_finished = 1;
-long maxDistance_Z = 4000;
+long maxDistance_Z = 5000;
 long maxDistance_S1 = 100;
 long maxDistance_S2 = 100;
-// long TravelZ;
+long maxDistance_S3 = 100;
+long TravelZ;
 
 void setup()
 {
@@ -40,22 +41,48 @@ void setup()
   pinMode(limitSwitch3, INPUT_PULLUP);
   pinMode(limitSwitchZ, INPUT_PULLUP);
 
-  // Stepper motors max speed
-  // stepper1.setMaxSpeed(100);
-  // stepper1.setAcceleration(100);
-  // stepper2.setMaxSpeed(100);
-  // stepper2.setAcceleration(100);
-  // stepper3.setMaxSpeed(100);
-  // stepper3.setAcceleration(100);
-  // stepperZ.setMaxSpeed(200);
-  // stepperZ.setAcceleration(100);
+  stepper3.setPinsInverted(true, false, false);
 
   homing();
+  stepperZ.setMaxSpeed(100);
+  stepperZ.setAcceleration(10);
+  stepper3.setMaxSpeed(100);
+  stepper3.setAcceleration(10);
+  stepper2.setMaxSpeed(100);
+  stepper2.setAcceleration(10);
+  stepper1.setMaxSpeed(20);
+  stepper1.setAcceleration(10);
 }
 
 void loop()
 {
-  // put your main code here, to run repeatedly:
+  if (Serial.available() > 0)
+  {
+    TravelZ = Serial.parseInt();
+    while (Serial.available())
+    {
+      Serial.read();
+    }
+    if (TravelZ < 0 || TravelZ > maxDistance_Z)
+    {
+      Serial.println("");
+      Serial.println("Please enter a value greater than zero and smaller or equal to 5000.");
+      Serial.println("");
+    }
+    else
+    {
+      Serial.print("Moving stepper to position: ");
+      Serial.println(TravelZ, DEC);
+      stepperZ.moveTo(TravelZ);
+      while (stepperZ.distanceToGo() != 0)
+      {
+        stepperZ.run();
+        delay(5);
+      }
+      Serial.println(stepperZ.currentPosition());
+      delay(5000);
+    }
+  }
 }
 
 // Get angles, output EE x and y positions.
@@ -88,9 +115,10 @@ void inverseKinematics(double x, double y)
 void homing()
 {
   Serial.println("Stepper is homing...");
-  // homeAxis_Z();
-  // homeAxis_S1();
-  homeAxis_S2();
+  homeAxis_Z();
+  //  homeAxis_S1();
+  //  homeAxis_S2();
+  //  homeAxis_S3();
 
   Serial.println("Homing Completed!");
 
@@ -113,8 +141,6 @@ void homeAxis_Z()
   }
 
   stepperZ.setCurrentPosition(maxDistance_Z);
-  stepperZ.setMaxSpeed(500);
-  stepperZ.setAcceleration(50);
   initial_homing = maxDistance_Z - 1;
 
   while (digitalRead(limitSwitchZ))
@@ -145,8 +171,6 @@ void homeAxis_S1()
   }
 
   stepper1.setCurrentPosition(maxDistance_S1);
-  stepper1.setMaxSpeed(500);
-  stepper1.setAcceleration(50);
   initial_homing = maxDistance_S1 - 1;
 
   while (digitalRead(limitSwitch1))
@@ -177,8 +201,6 @@ void homeAxis_S2()
   }
 
   stepper2.setCurrentPosition(maxDistance_S2);
-  stepper2.setMaxSpeed(500);
-  stepper2.setAcceleration(50);
   initial_homing = maxDistance_S2 - 1;
 
   while (digitalRead(limitSwitch2))
@@ -191,4 +213,34 @@ void homeAxis_S2()
 
   stepper2.setCurrentPosition(maxDistance_S2);
   Serial.println("S2 Homing Completed.");
+}
+
+// Home The S3 Stepper Motor
+void homeAxis_S3()
+{
+  stepper3.setMaxSpeed(20);
+  stepper3.setAcceleration(10);
+  initial_homing = 1;
+
+  while (!digitalRead(limitSwitch3))
+  {
+    stepper3.moveTo(initial_homing);
+    initial_homing++;
+    stepper3.run();
+    delay(5);
+  }
+
+  stepper3.setCurrentPosition(maxDistance_S3);
+  initial_homing = maxDistance_S3 - 1;
+
+  while (digitalRead(limitSwitch3))
+  {
+    stepper3.moveTo(initial_homing);
+    stepper3.run();
+    initial_homing--;
+    delay(5);
+  }
+
+  stepper3.setCurrentPosition(maxDistance_S3);
+  Serial.println("S3 Homing Completed.");
 }
