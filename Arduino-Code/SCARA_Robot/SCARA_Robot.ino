@@ -57,21 +57,21 @@ void setup() {
   pinMode(limitSwitch4, INPUT_PULLUP);
 
   // Stepper motors max speed
-  stepper1.setMaxSpeed(4000);
-  stepper1.setAcceleration(2000);
-  stepper2.setMaxSpeed(4000);
-  stepper2.setAcceleration(2000);
-  stepper3.setMaxSpeed(4000);
-  stepper3.setAcceleration(2000);
-  stepper4.setMaxSpeed(4000);
-  stepper4.setAcceleration(2000);
+  stepper1.setMaxSpeed(1000);
+  stepper1.setAcceleration(500);
+  stepper2.setMaxSpeed(1000);
+  stepper2.setAcceleration(500);
+  stepper3.setMaxSpeed(1000);
+  stepper3.setAcceleration(500);
+  stepper4.setMaxSpeed(1000);
+  stepper4.setAcceleration(500);
 
   gripperServo.attach(A0, 600, 2500);
   // initial servo value - open gripper
   data[6] = 180;
   gripperServo.write(data[6]);
   delay(1000);
-  data[5] = 100;
+  data[5] = 0;
   homing();
 }
 
@@ -248,6 +248,7 @@ void serialFlush() {
 void homing() {
   // Homing Stepper4
   while (digitalRead(limitSwitch4) != 1) {
+
     stepper4.setSpeed(1500);
     stepper4.runSpeed();
     stepper4.setCurrentPosition(17000); // When limit switch pressed set position to 0 steps

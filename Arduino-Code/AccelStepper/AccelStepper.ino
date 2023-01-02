@@ -16,9 +16,10 @@ int move_finished = 1;
 long maxDistance_Z = 4000;
 long TravelZ;
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
-  
+
   pinMode(limitSwitch1, INPUT_PULLUP);
   pinMode(limitSwitch2, INPUT_PULLUP);
   pinMode(limitSwitch3, INPUT_PULLUP);
@@ -31,73 +32,82 @@ void setup() {
   stepper2.setAcceleration(100);
   stepper3.setMaxSpeed(100);
   stepper3.setAcceleration(100);
-  stepperZ.setMaxSpeed(60);
-  stepperZ.setAcceleration(20);
+  stepperZ.setMaxSpeed(50);
+  stepperZ.setAcceleration(10);
 
-  Serial.println("Stepper is homing...");
+  // Serial.println("Stepper is homing...");
 
-  while (!digitalRead(limitSwitchZ)){
-    stepperZ.moveTo(initial_homing);
-    initial_homing++;
-    stepperZ.run();
-    delay(5);
-  }
-  
-  stepperZ.setCurrentPosition(maxDistance_Z);
-  stepperZ.setMaxSpeed(100);
-  stepperZ.setAcceleration(100);
-  initial_homing = maxDistance_Z - 1;
-  
-  while (digitalRead(limitSwitchZ)){
-    stepperZ.moveTo(initial_homing);
-    stepperZ.run();
-    initial_homing--;
-    delay(5);
-  }
+  // while (!digitalRead(limitSwitchZ))
+  // {
+  //   stepperZ.moveTo(initial_homing);
+  //   stepperZ.run();
+  //   initial_homing++;
+  //   delay(5);
+  // }
 
-  stepperZ.setCurrentPosition(maxDistance_Z);
-  Serial.println("Homing Completed!");
-  stepperZ.setMaxSpeed(500);
-  stepperZ.setAcceleration(50);
+  // stepperZ.setCurrentPosition(maxDistance_Z);
+  // stepperZ.setMaxSpeed(100);
+  // stepperZ.setAcceleration(100);
+  // initial_homing = maxDistance_Z - 1;
 
-  Serial.print("Current Position: ");
-  Serial.println(stepperZ.currentPosition());
-  Serial.println("Enter travel distance: "); 
+  // while (digitalRead(limitSwitchZ))
+  // {
+  //   stepperZ.moveTo(initial_homing);
+  //   stepperZ.run();
+  //   initial_homing--;
+  //   delay(5);
+  // }
+
+  // stepperZ.setCurrentPosition(maxDistance_Z);
+  // Serial.println("Homing Completed!");
+  // stepperZ.setMaxSpeed(500);
+  // stepperZ.setAcceleration(50);
+
+  // Serial.print("Current Position: ");
+  // Serial.println(stepperZ.currentPosition());
+  // Serial.println("Enter travel distance: ");
 }
 
-void loop(){
-
-  while (Serial.available() > 0 && move_finished == 1){
-
-    
-    TravelZ = Serial.parseInt();
-    if (TravelZ < 0 || TravelZ > maxDistance_Z){
-      Serial.println("");
-      Serial.println("Please enter a value greater than zero and smaller or equal to 4000.");
-      Serial.println("");
-    }
-    else{
-      Serial.print("Moving stepper to position: ");
-      Serial.println(TravelZ);
-      stepperZ.moveTo(TravelZ);
-      move_finished = 0;
-
-      delay(10000);
-    }
+void loop()
+{
+  if (Serial.available() > 0)
+  {
+    Serial.println("Check!");
   }
 
-  if (TravelZ >=0 && TravelZ <= maxDistance_Z) {
-    if ((stepperZ.distanceToGo() != 0)) {
-      stepperZ.run();
-    }
+  // while (Serial.available() > 0 && move_finished == 1)
+  // {
 
-    if ((move_finished == 0) && (stepperZ.distanceToGo() == 0)){
-      Serial.println("Completed!");
-      Serial.println("");
-      Serial.print("Current Position: ");
-      Serial.println(stepperZ.currentPosition());
-      Serial.println("Enter travel distance: ");
-      move_finished = 1;
-  }
-  }
+  //   TravelZ = Serial.parseInt();
+  //   if (TravelZ < 0 || TravelZ > maxDistance_Z)
+  //   {
+  //     Serial.println("");
+  //     Serial.println("Please enter a value greater than zero and smaller or equal to 4000.");
+  //     Serial.println("");
+  //   }
+  //   else
+  //   {
+  //     Serial.print("Moving stepper to position: ");
+  //     Serial.println(TravelZ);
+  //     stepperZ.moveTo(TravelZ);
+  //     move_finished = 0;
+
+  //     delay(10000);
+  //   }
+  // }
+
+  // if (TravelZ >=0 && TravelZ <= maxDistance_Z) {
+  //   if ((stepperZ.distanceToGo() != 0)) {
+  //     stepperZ.run();
+  //   }
+
+  //   if ((move_finished == 0) && (stepperZ.distanceToGo() == 0)){
+  //     Serial.println("Completed!");
+  //     Serial.println("");
+  //     Serial.print("Current Position: ");
+  //     Serial.println(stepperZ.currentPosition());
+  //     Serial.println("Enter travel distance: ");
+  //     move_finished = 1;
+  // }
+  // }
 }
