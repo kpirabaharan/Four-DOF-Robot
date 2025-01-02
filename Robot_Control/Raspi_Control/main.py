@@ -42,17 +42,6 @@ Z_DISTANCE_TO_STEPS = 41.04
 arduino = serial.Serial("/dev/ttyACM0", 115200)
 
 
-def send_move_command():
-    print(f"Stepper 1: {stepper_position_1}")
-    print(f"Stepper 2: {stepper_position_2}")
-    print(f"Stepper 3: {stepper_position_3}")
-    print(f"Stepper Z: {stepper_position_z}")
-
-    arduino.write(
-        f"move {stepper_position_1} {stepper_position_2} {stepper_position_3} {stepper_position_z}\n".encode()
-    )
-
-
 def forward_kinematics(j1, j2, j3, jz):
     x = 0
     y = 0
@@ -69,6 +58,7 @@ def inverse_kinematics(x, y, z):
 
 
 def convert_to_steps(j1, j2, j3, jz):
+    global stepper_position_1, stepper_position_2, stepper_position_3, stepper_position_z
     stepper_position_1 = int(j1 * THETA1_ANGLE_TO_STEPS)
     stepper_position_2 = int(j2 * THETA2_ANGLE_TO_STEPS)
     stepper_position_3 = int(j3 * PHI_ANGLE_TO_STEPS)
@@ -82,8 +72,40 @@ def convert_to_steps(j1, j2, j3, jz):
     )
 
 
+def send_move_command():
+    print(
+        f"Stepper 1: {stepper_position_1}, Stepper 2: {stepper_position_2}, Stepper 3: {stepper_position_3}, Stepper Z: {stepper_position_z}"
+    )
+
+    arduino.write(
+        f"move {stepper_position_1} {stepper_position_2} {stepper_position_3} {stepper_position_z}\n".encode()
+    )
+
+
+# Button Functions
 def home():
     arduino.write("home\n".encode())
+
+
+def send(var_j1, var_j2, var_j3, var_z):
+    global j1, j2, j3, jz
+    global stepper_position_1, stepper_position_2, stepper_position_3, stepper_position_z
+    j1 = var_j1.get()
+    j2 = var_j2.get()
+    j3 = var_j3.get()
+    jz = var_z.get()
+    (
+        stepper_position_1,
+        stepper_position_2,
+        stepper_position_3,
+        stepper_position_z,
+    ) = convert_to_steps(j1, j2, j3, jz)
+    send_move_command()
+
+
+# Keystrokes
+def on_enter(event, var_j1, var_j2, var_j3, var_z):
+    send(var_j1, var_j2, var_j3, var_z)
 
 
 # Main function to create the GUI
@@ -92,30 +114,15 @@ def main():
     root = tk.Tk()
     root.title("SCARA Robot Joint Control")
 
-    # Joint number entry
-    btn_home = tk.Button(root, text="Home", command=lambda: home())
-    btn_home.grid(row=1, column=0, padx=10, pady=5)
-
     # Create an IntVar to hold value of the Entry Widgets
     var_j1 = tk.IntVar(value=j1)
     var_j2 = tk.IntVar(value=j2)
     var_j3 = tk.IntVar(value=j3)
     var_z = tk.IntVar(value=jz)
 
-    def send():
-        global j1, j2, j3, jz
-        global stepper_position_1, stepper_position_2, stepper_position_3, stepper_position_z
-        j1 = var_j1.get()
-        j2 = var_j2.get()
-        j3 = var_j3.get()
-        jz = var_z.get()
-        (
-            stepper_position_1,
-            stepper_position_2,
-            stepper_position_3,
-            stepper_position_z,
-        ) = convert_to_steps(j1, j2, j3, jz)
-        send_move_command()
+    # Joint number entry
+    btn_home = tk.Button(root, text="Home", command=lambda: home())
+    btn_home.grid(row=1, column=0, padx=10, pady=5)
 
     # Entry for each joints
     entry_j1 = tk.Entry(root, textvariable=var_j1)
@@ -141,8 +148,12 @@ def main():
     tk.Label(root, text="Z Height (0mm - 150mm)").grid(row=5, column=1, padx=10, pady=5)
 
     # Button to send the command
-    btn_send = tk.Button(root, text="Send", command=lambda: send())
+    btn_send = tk.Button(
+        root, text="Send", command=lambda: send(var_j1, var_j2, var_j3, var_z)
+    )
     btn_send.grid(row=6, column=0, padx=10, pady=5)
+
+    root.bind("<Return>", lambda event: on_enter(event, var_j1, var_j2, var_j3, var_z))
 
     # Start the GUI loop
     root.mainloop()

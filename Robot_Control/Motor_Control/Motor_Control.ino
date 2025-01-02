@@ -117,6 +117,12 @@ void setup() {
   stepperZ.setMaxSpeed(Z_MAX_SPEED);
   stepperZ.setAcceleration(Z_ACCELERATION);
 
+  // Set Current Positions as Home
+  stepper1.setCurrentPosition(HOME_STEPPER1);
+  stepper2.setCurrentPosition(HOME_STEPPER2);
+  stepper3.setCurrentPosition(HOME_STEPPER3);
+  stepperZ.setCurrentPosition(HOME_STEPPERZ);
+
   // Servo Motor
   gripper.attach(SERVO_PIN, SERVO_MIN, SERVO_MAX);
   gripper.write(SERVO_MAX);
@@ -132,7 +138,6 @@ void loop() {
   if (Serial.available()) {
     // Read Serial Data
     command = Serial.readStringUntil('\n');
-    Serial.println("Received: " + command);
 
     // Parse Command
     // Home
@@ -161,7 +166,14 @@ void loop() {
       stepper3Position = values[2];
       stepperZPosition = values[3];
 
+      // Set Stepper Positions
+      Serial.println("set_step success");
       setMovePosition();
+    }
+
+    // Request for current step positions
+    if (command == "report_current_step") {
+      reportStepperPositions("current_step", stepper1.currentPosition(), stepper2.currentPosition(), stepper3.currentPosition(), stepperZ.currentPosition());
     }
   }
 
@@ -260,6 +272,12 @@ void home() {
     stepperZPosition = stepperZ.currentPosition();
     is_homing = false;
   }
+}
+
+void reportStepperPositions(String cmd, int j1, int j2, int j3, int jz) {
+  char buffer[50];
+  sprintf(buffer, "%s %d %d %d %d", cmd.c_str(), j1, j2, j3, jz);
+  Serial.println(buffer);
 }
 
 void setMovePosition() {
