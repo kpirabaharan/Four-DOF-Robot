@@ -6,6 +6,13 @@ type Position = {
   j2: number;
   j3: number;
   jz: number;
+  s1: number;
+  s2: number;
+  s3: number;
+  sz: number;
+  xP: number;
+  yP: number;
+  zP: number;
 };
 
 export const useSocket = () => {
@@ -16,6 +23,13 @@ export const useSocket = () => {
     j2: 0,
     j3: 0,
     jz: 0,
+    s1: 0,
+    s2: 0,
+    s3: 0,
+    sz: 0,
+    xP: 0,
+    yP: 0,
+    zP: 0,
   });
 
   useEffect(() => {
@@ -29,7 +43,7 @@ export const useSocket = () => {
       setIsConnected(false);
     });
 
-    socketInstance.on('current_angle', (data: Position) => {
+    socketInstance.on('current_position', (data: Position) => {
       setPositions(data);
     });
 
@@ -38,7 +52,7 @@ export const useSocket = () => {
     return () => {
       socketInstance.off('connect');
       socketInstance.off('disconnect');
-      socketInstance.off('current_angle');
+      socketInstance.off('current_position');
       socketInstance.close();
     };
   }, []);

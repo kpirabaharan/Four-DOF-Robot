@@ -75,12 +75,6 @@ Servo gripper;
 #define Z_ACCELERATION 25
 #define ROTATIONAL_ACCELERATION 25
 
-// Angle to Steps Conversion
-#define THETA1_ANGLE_TO_STEPS 9.8707865169
-#define THETA2_ANGLE_TO_STEPS 8.4133333333
-#define PHI_ANGLE_TO_STEPS 2.5679012346
-#define Z_DISTANCE_TO_STEPS 41.04
-
 // BAUD Rate
 #define BAUD_RATE 115200
 
@@ -147,6 +141,10 @@ void loop() {
 
     // Move ex. "move j1 j2 j3 jz" 
     if (command.startsWith("move")) {
+      // Check if homing is in progress
+      is_homing = false;
+      homing_state = 0;
+
       String data = command.substring(5);
       int values[4];
       int i = 0;

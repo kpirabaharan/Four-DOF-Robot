@@ -3,7 +3,9 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import axios from 'axios';
+
+import { api } from '@/lib/axios';
+import { useToast } from '@/hooks/use-toast';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -27,28 +29,27 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+interface JointControlsProps {
+  j1: number;
+  j2: number;
+  j3: number;
+  jz: number;
+}
 
-const JointControls = () => {
+const JointControls = ({ j1, j2, j3, jz }: JointControlsProps) => {
+  const { toast } = useToast();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      j1: 0,
-      j2: 0,
-      j3: 0,
-      jz: 0,
-    },
+    defaultValues: { j1, j2, j3, jz },
   });
 
   const onSubmit = async (values: FormValues) => {
     try {
-      const response = await api.post('/api/joint-controls', values);
-      console.log({ response });
+      await api.post('/api/joint-controls', values);
+      toast({
+        title: 'Moving Joints',
+        description: `J1: ${values.j1}, J2: ${values.j2}, J3: ${values.j3}, JZ: ${values.jz}`,
+      });
     } catch (err) {
       console.log(err);
     }
