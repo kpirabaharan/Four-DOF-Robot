@@ -65,7 +65,7 @@ time.sleep(2)
 
 
 def forward_kinematics(j1, j2, jz):
-    r1 = j1 * math.pi / 180
+    r1 = math.radians(j1)
     r2 = j2 * math.pi / 180
     xP = round(L1 * math.cos(r1) + L2 * math.cos(r1 + r2))
     yP = round(L1 * math.sin(r1) + L2 * math.sin(r1 + r2))
