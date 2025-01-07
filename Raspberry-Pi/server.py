@@ -53,11 +53,11 @@ HOME_JZ = 100
 # Global Variables
 current_angle = {"j1": 0, "j2": 0, "j3": 0, "jz": 0}
 current_step = {"s1": 0, "s2": 0, "s3": 0, "sz": 0}
-current_planar = {"xP": 0, "yP": 0, "zP": 100}
+current_cartesian = {"xP": 0, "yP": 0, "zP": 100}
 
 set_angle = {"j1": 0, "j2": 0, "j3": 0, "jz": 100}
 set_step = {"s1": 0, "s2": 0, "s3": 0, "sz": 4104}
-set_planar = {"xP": 0, "yP": 0, "zP": 100}
+set_cartesian = {"xP": 364, "yP": 0, "zP": 100}
 
 # Init Serial Connection
 arduino = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
@@ -141,11 +141,13 @@ def read_position():
                 current_step["sz"],
             )
 
-            # Calculate Planar Position
-            current_planar["xP"], current_planar["yP"], current_planar["zP"] = (
-                forward_kinematics(
-                    current_angle["j1"], current_angle["j2"], current_angle["jz"]
-                )
+            # Calculate Cartesian Position
+            (
+                current_cartesian["xP"],
+                current_cartesian["yP"],
+                current_cartesian["zP"],
+            ) = forward_kinematics(
+                current_angle["j1"], current_angle["j2"], current_angle["jz"]
             )
 
             position = {
@@ -157,9 +159,9 @@ def read_position():
                 "s2": current_step["s2"],
                 "s3": current_step["s3"],
                 "sz": current_step["sz"],
-                "xP": current_planar["xP"],
-                "yP": current_planar["yP"],
-                "zP": current_planar["zP"],
+                "xP": current_cartesian["xP"],
+                "yP": current_cartesian["yP"],
+                "zP": current_cartesian["zP"],
             }
 
         socketio.emit("current_position", position)
@@ -173,22 +175,22 @@ def home():
     return jsonify({"message": "Homing"}), 200
 
 
-@app.route("/api/planar-controls", methods=["GET"])
-def get_planar():
+@app.route("/api/cartesian-controls", methods=["GET"])
+def get_cartesian_controls():
     return (
         jsonify(
             {
-                "xP": set_planar["xP"],
-                "yP": set_planar["yP"],
-                "zP": set_planar["zP"],
+                "xP": set_cartesian["xP"],
+                "yP": set_cartesian["yP"],
+                "zP": set_cartesian["zP"],
             }
         ),
         200,
     )
 
 
-@app.route("/api/planar-controls", methods=["POST"])
-def set_planar():
+@app.route("/api/cartesian-controls", methods=["POST"])
+def set_cartesian_controls():
     try:
         data = request.json
 
@@ -196,22 +198,22 @@ def set_planar():
             return jsonify({"error": "Invalid Request"}), 400
 
         if data["xP"] < -364 or data["xP"] > 364:
-            return jsonify({"error": "Invalid xP value"}), 400
+            return jsonify({"error": "Invalid X value"}), 400
 
         if data["yP"] < -364 or data["yP"] > 364:
-            return jsonify({"error": "Invalid yP value"}), 400
+            return jsonify({"error": "Invalid Y value"}), 400
 
         if data["zP"] < 0 or data["zP"] > 150:
-            return jsonify({"error": "Invalid zP value"}), 400
+            return jsonify({"error": "Invalid Z value"}), 400
 
-        set_planar["xP"] = data["xP"]
-        set_planar["yP"] = data["yP"]
-        set_planar["zP"] = data["zP"]
+        set_cartesian["xP"] = data["xP"]
+        set_cartesian["yP"] = data["yP"]
+        set_cartesian["zP"] = data["zP"]
 
         # Calculate Inverse Kinematics
 
         set_angle["j1"], set_angle["j2"], set_angle["jz"] = inverse_kinematics_pos(
-            set_planar["xP"], set_planar["yP"], set_planar["zP"]
+            set_cartesian["xP"], set_cartesian["yP"], set_cartesian["zP"]
         )
 
         set_step["s1"], set_step["s2"], set_step["s3"], set_step["sz"] = (
@@ -229,7 +231,7 @@ def set_planar():
 
         # if response == "set_step success":
         #     print("Set Step Success")
-        return jsonify(set_planar), 200
+        return jsonify(set_cartesian), 200
         # else:
         #     print("Set Step Failed")
         #     return jsonify({"error": "Set Step Failed"}), 500
@@ -238,7 +240,7 @@ def set_planar():
 
 
 @app.route("/api/joint-controls", methods=["GET"])
-def get_joints():
+def get_joint_controls():
     return (
         jsonify(
             {
@@ -253,7 +255,7 @@ def get_joints():
 
 
 @app.route("/api/joint-controls", methods=["POST"])
-def set_joints():
+def set_joint_controls():
     try:
         data = request.json
 

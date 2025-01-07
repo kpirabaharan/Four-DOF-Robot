@@ -1,4 +1,4 @@
-// Check min and max values for each joint / planar motion
+// Check min and max values for each joint / cartesian motion
 
 #include <AccelStepper.h>
 #include <Servo.h>

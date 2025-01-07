@@ -15,7 +15,7 @@ stepper_position_1, stepper_position_2, stepper_position_3, stepper_position_z =
     4104,
 )
 
-# Planar Coordinates
+# Cartesian Coordinates
 x, y, z = 0, 0, 100
 
 # Stepper Motor Limits
