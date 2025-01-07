@@ -66,11 +66,35 @@ time.sleep(2)
 
 def forward_kinematics(j1, j2, jz):
     r1 = math.radians(j1)
-    r2 = j2 * math.pi / 180
+    r2 = math.radians(j2)
     xP = round(L1 * math.cos(r1) + L2 * math.cos(r1 + r2))
     yP = round(L1 * math.sin(r1) + L2 * math.sin(r1 + r2))
     zP = jz
-    return xP, yP, zP
+    return (xP, yP, zP)
+
+
+def inverse_kinematics_pos(x, y, z):
+    t2 = math.acos((x**2 + y**2 - L1**2 - L2**2) / (2 * L1 * L2))
+    j2 = round(math.degrees(t2), 1)
+
+    t1 = math.atan2(y, x) - math.atan2(L2 * math.sin(t2), L1 + L2 * math.cos(t2))
+    j1 = round(math.degrees(t1), 1)
+
+    jz = z
+
+    return (j1, j2, jz)
+
+
+def inverse_kinematics_neg(x, y, z):
+    t2 = -math.acos((x**2 + y**2 - L1**2 - L2**2) / (2 * L1 * L2))
+    j2 = round(math.degrees(t2), 1)
+
+    t1 = math.atan2(y, x) - math.atan2(L2 * math.sin(t2), L1 + L2 * math.cos(t2))
+    j1 = round(math.degrees(t1), 1)
+
+    jz = z
+
+    return (j1, j2, jz)
 
 
 def convert_angles_to_steps(j1, j2, j3, jz):
@@ -135,7 +159,8 @@ def read_position():
                 "sz": current_step["sz"],
                 "xP": current_planar["xP"],
                 "yP": current_planar["yP"],
-                "zP": current_planar["zP"],}
+                "zP": current_planar["zP"],
+            }
 
         socketio.emit("current_position", position)
 
@@ -146,6 +171,70 @@ def read_position():
 def home():
     arduino.write(b"home\n")
     return jsonify({"message": "Homing"}), 200
+
+
+@app.route("/api/planar-controls", methods=["GET"])
+def get_planar():
+    return (
+        jsonify(
+            {
+                "xP": set_planar["xP"],
+                "yP": set_planar["yP"],
+                "zP": set_planar["zP"],
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/api/planar-controls", methods=["POST"])
+def set_planar():
+    try:
+        data = request.json
+
+        if "xP" not in data or "yP" not in data or "zP" not in data:
+            return jsonify({"error": "Invalid Request"}), 400
+
+        if data["xP"] < -364 or data["xP"] > 364:
+            return jsonify({"error": "Invalid xP value"}), 400
+
+        if data["yP"] < -364 or data["yP"] > 364:
+            return jsonify({"error": "Invalid yP value"}), 400
+
+        if data["zP"] < 0 or data["zP"] > 150:
+            return jsonify({"error": "Invalid zP value"}), 400
+
+        set_planar["xP"] = data["xP"]
+        set_planar["yP"] = data["yP"]
+        set_planar["zP"] = data["zP"]
+
+        # Calculate Inverse Kinematics
+
+        set_angle["j1"], set_angle["j2"], set_angle["jz"] = inverse_kinematics_pos(
+            set_planar["xP"], set_planar["yP"], set_planar["zP"]
+        )
+
+        set_step["s1"], set_step["s2"], set_step["s3"], set_step["sz"] = (
+            convert_angles_to_steps(
+                set_angle["j1"], set_angle["j2"], set_angle["j3"], set_angle["jz"]
+            )
+        )
+
+        # # Send Move Command
+        # arduino.write(
+        #     f"move {set_step['s1']} {set_step['s2']} {set_step['s3']} {set_step['sz']}\n".encode()
+        # )
+
+        # response = arduino.readline().decode("utf-8").strip()
+
+        # if response == "set_step success":
+        #     print("Set Step Success")
+        return jsonify(set_planar), 200
+        # else:
+        #     print("Set Step Failed")
+        #     return jsonify({"error": "Set Step Failed"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/joint-controls", methods=["GET"])
