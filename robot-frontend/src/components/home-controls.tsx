@@ -1,7 +1,7 @@
 import { FaHome } from 'react-icons/fa';
 
-import { api } from '@/lib/axios';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/axios';
 
 import { Button } from '@/components/ui/button';
 

@@ -1,11 +1,13 @@
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import useSWR from 'swr';
 import { z } from 'zod';
 
-import { api } from '@/lib/axios';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/axios';
+import { fetcher } from '@/lib/fetcher';
 
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,6 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from './ui/skeleton';
 
 const formSchema = z.object({
   xP: z.coerce.number().int().gte(-364).lte(364),
@@ -26,18 +30,30 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface CartesianControlsProps {
-  xP: number;
-  yP: number;
-  zP: number;
-}
-
-const CartesianControls = ({ xP, yP, zP }: CartesianControlsProps) => {
+const CartesianControls = () => {
   const { toast } = useToast();
+
+  const { data, isLoading, error } = useSWR(
+    '/api/cartesian-controls',
+    fetcher,
+    {
+      refreshInterval: 1000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      revalidateIfStale: true,
+    },
+  );
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { xP, yP, zP },
+    defaultValues: { xP: 0, yP: 0, zP: 0 },
   });
+
+  useEffect(() => {
+    if (data) {
+      form.reset(data);
+    }
+  }, [data, form]);
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -50,6 +66,17 @@ const CartesianControls = ({ xP, yP, zP }: CartesianControlsProps) => {
       console.log(err);
     }
   };
+
+  if (isLoading) return <Skeleton className='h-[282px] w-[384px] rounded-lg' />;
+
+  // TODO: Error UI
+  if (error)
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        <p>Error: {error.message}</p>
+      </div>
+    );
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>

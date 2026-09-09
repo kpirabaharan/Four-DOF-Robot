@@ -1,11 +1,13 @@
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import useSWR from 'swr';
 import { z } from 'zod';
 
-import { api } from '@/lib/axios';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/axios';
+import { fetcher } from '@/lib/fetcher';
 
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,6 +19,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const formSchema = z.object({
   j1: z.coerce.number().int().gte(-90).lte(266),
@@ -27,19 +31,26 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface JointControlsProps {
-  j1: number;
-  j2: number;
-  j3: number;
-  jz: number;
-}
-
-const JointControls = ({ j1, j2, j3, jz }: JointControlsProps) => {
+const JointControls = () => {
   const { toast } = useToast();
+
+  const { data, isLoading, error } = useSWR('/api/joint-controls', fetcher, {
+    refreshInterval: 1000,
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    revalidateIfStale: true,
+  });
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { j1, j2, j3, jz },
+    defaultValues: { j1: 0, j2: 0, j3: 0, jz: 0 },
   });
+
+  useEffect(() => {
+    if (data) {
+      form.reset(data);
+    }
+  }, [data, form]);
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -52,6 +63,16 @@ const JointControls = ({ j1, j2, j3, jz }: JointControlsProps) => {
       console.log(err);
     }
   };
+
+  if (isLoading) return <Skeleton className='h-[334px] w-[384px] rounded-lg' />;
+
+  // TODO: Error UI
+  if (error)
+    return (
+      <div className='flex justify-center items-center h-screen'>
+        <p>Error: {error.message}</p>
+      </div>
+    );
 
   return (
     <Form {...form}>

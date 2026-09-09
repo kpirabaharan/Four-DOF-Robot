@@ -5,6 +5,7 @@ import serial
 import threading
 import time
 import math
+import os
 
 
 # Flask App
@@ -60,7 +61,8 @@ set_step = {"s1": 0, "s2": 0, "s3": 0, "sz": 4104}
 set_cartesian = {"xP": 364, "yP": 0, "zP": 100}
 
 # Init Serial Connection
-arduino = serial.Serial("/dev/ttyACM0", 115200, timeout=1)
+SERIAL_PORT = os.environ.get("SERIAL_PORT", "/dev/arduino")
+arduino = serial.Serial(SERIAL_PORT, 115200, timeout=1)
 time.sleep(2)
 
 
@@ -304,5 +306,6 @@ def set_joint_controls():
 
 
 if __name__ == "__main__":
-    threading.Thread(target=read_position).start()
-    socketio.run(app, host="0.0.0.0", port=5000)
+    threading.Thread(target=read_position, daemon=True).start()
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port, allow_unsafe_werkzeug=True)
