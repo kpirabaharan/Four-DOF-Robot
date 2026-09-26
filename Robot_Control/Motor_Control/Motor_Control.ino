@@ -54,14 +54,20 @@ AccelStepper stepperZ(1, STEPPERZ_STEP_PIN, STEPPERZ_DIR_PIN);
 Servo gripper; 
 
 // Limits and Homing
-#define MIN_STEPPER1 -888
-#define MAX_STEPPER1 2626
+// Home calibration, Sep 2026. After homing, zero sat 13/12/26 degrees short
+// of square with the table, so the switch is now stamped that much further out
+// and the axis travels the extra distance before calling itself home. Both ends
+// of each range shift together, so the physical travel span is unchanged
+// (3514 / 2524 / 832 steps). Keep these in step with server.py and
+// robot-web/lib/robot.ts -- the vitest goldens assert they agree.
+#define MIN_STEPPER1 -1017  // was -888,  -90deg -> -103deg
+#define MAX_STEPPER1 2497   // was 2626,  266deg -> 253deg
 #define HOME_STEPPER1 0
-#define MIN_STEPPER2 -1262
-#define MAX_STEPPER2 1262
+#define MIN_STEPPER2 -1363  // was -1262, -150deg -> -162deg
+#define MAX_STEPPER2 1161   // was 1262,   150deg -> 138deg
 #define HOME_STEPPER2 0
-#define MIN_STEPPER3 -416
-#define MAX_STEPPER3 416
+#define MIN_STEPPER3 -483   // was -416,  -162deg -> -188deg
+#define MAX_STEPPER3 349    // was 416,    162deg -> 136deg
 #define HOME_STEPPER3 0
 #define MIN_STEPPERZ 0
 #define MAX_STEPPERZ 6156
